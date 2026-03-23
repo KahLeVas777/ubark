@@ -1,27 +1,26 @@
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "experimentalDecorators": true,
-    "useDefineForClassFields": false,
-    "module": "ESNext",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "allowJs": true,
-    "jsx": "react-jsx",
-    "paths": {
-      "@/*": [
-        "./*"
-      ]
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { defineConfig, loadEnv } from 'vite';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+
+  return {
+    plugins: [react(), tailwindcss()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src'),
+        'node-fetch': path.resolve(__dirname, 'src/dummy-fetch.ts'),
+        undici: path.resolve(__dirname, 'src/dummy-fetch.ts')
+      }
     },
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "noEmit": true
-  }
-}
+    server: {
+      hmr: process.env.DISABLE_HMR !== 'true'
+    }
+  };
+});
