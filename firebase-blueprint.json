@@ -1,0 +1,84 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and role information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID from Firebase Auth." },
+        "email": { "type": "string", "format": "email", "description": "User's email address." },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "User's role in the system." },
+        "displayName": { "type": "string", "description": "User's display name." },
+        "photoURL": { "type": "string", "format": "uri", "description": "User's profile picture URL." }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Store product information.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique product ID." },
+        "name": { "type": "string", "description": "Product name." },
+        "price": { "type": "number", "description": "Product price." },
+        "description": { "type": "string", "description": "Product description." },
+        "category": { "type": "string", "description": "Product category." },
+        "stock": { "type": "integer", "description": "Available stock." },
+        "imageUrl": { "type": "string", "format": "uri", "description": "Product image URL." }
+      },
+      "required": ["id", "name", "price", "stock"]
+    },
+    "LibraryFile": {
+      "title": "LibraryFile",
+      "description": "File metadata for the library.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique file ID." },
+        "name": { "type": "string", "description": "File name." },
+        "type": { "type": "string", "enum": ["VIP", "General", "Temp"], "description": "Access level for the file." },
+        "url": { "type": "string", "format": "uri", "description": "File download URL." },
+        "description": { "type": "string", "description": "File description." },
+        "uploadedBy": { "type": "string", "description": "UID of the user who uploaded the file." },
+        "authorName": { "type": "string", "description": "Name of the author who uploaded the file." },
+        "category": { "type": "string", "description": "Category of the file (e.g., Protocol, Strategy, Lore)." },
+        "learningLevel": { "type": "string", "enum": ["Iniciante", "Intermediário", "Avançado"], "description": "Learning level required for the file." }
+      },
+      "required": ["id", "name", "type", "url"]
+    },
+    "ForumPost": {
+      "title": "ForumPost",
+      "description": "Community forum post.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique post ID." },
+        "title": { "type": "string", "description": "Post title." },
+        "content": { "type": "string", "description": "Post content." },
+        "authorUid": { "type": "string", "description": "UID of the post author." },
+        "authorName": { "type": "string", "description": "Display name of the post author." },
+        "category": { "type": "string", "description": "Post category." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp when the post was created." },
+        "likes": { "type": "array", "description": "List of user UIDs who liked the post." },
+        "commentsCount": { "type": "integer", "description": "Number of comments on the post." }
+      },
+      "required": ["id", "title", "content", "authorUid", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profiles."
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Store products."
+    },
+    "/library_files/{fileId}": {
+      "schema": "LibraryFile",
+      "description": "Library files."
+    },
+    "/forum_posts/{postId}": {
+      "schema": "ForumPost",
+      "description": "Forum posts."
+    }
+  }
+}
