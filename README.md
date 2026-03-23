@@ -3,15 +3,26 @@
 Este projeto foi desenvolvido com foco em organização, acesso rápido à informação e experiência centralizada para usuários, produtos, arquivos da biblioteca e fórum.
 
 ## Funcionalidades
-
-- Autenticação de usuários com Firebase
-- Gerenciamento de produtos
-- Biblioteca de arquivos com níveis de acesso
-- Fórum para interação entre usuários
+- Autenticação com Firebase
+- Gestão de usuários
+- Catálogo de produtos
+- Biblioteca de arquivos
+- Fórum comunitário
 
 ## Tecnologias
-
-- Firebase Auth
+- React
+- Vite
+- TypeScript
+- Firebase
 - Firestore
-- React / Next.js ou a stack real do projeto
-- AI Studio
+
+## Estrutura de dados
+- User
+- Product
+- LibraryFile
+- ForumPost
+
+## Como executar
+1. Instalar dependências
+2. Configurar variáveis de ambiente
+3. Rodar o projeto
