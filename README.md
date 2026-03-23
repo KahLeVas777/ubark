@@ -1,20 +1,17 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+## Visão geral
 
-# Run and deploy your AI Studio app
+Este projeto foi desenvolvido com foco em organização, acesso rápido à informação e experiência centralizada para usuários, produtos, arquivos da biblioteca e fórum.
 
-This contains everything you need to run your app locally.
+## Funcionalidades
 
-View your app in AI Studio: https://ai.studio/apps/f74141c8-1cfd-48fc-8c10-23d3c48d3ff1
+- Autenticação de usuários com Firebase
+- Gerenciamento de produtos
+- Biblioteca de arquivos com níveis de acesso
+- Fórum para interação entre usuários
 
-## Run Locally
+## Tecnologias
 
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- Firebase Auth
+- Firestore
+- React / Next.js ou a stack real do projeto
+- AI Studio
