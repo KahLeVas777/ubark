@@ -1,59 +1,12 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    //
-    // Collection: users
-    // Document ID: {uid}
-    // Fields:
-    //   - uid: string (required)
-    //   - email: string (required)
-    //   - role: string (required, ['admin', 'user'])
-    //   - displayName: string (optional)
-    //   - photoURL: string (optional)
-    //
-    // Collection: products
-    // Document ID: {productId}
-    // Fields:
-    //   - id: string (required)
-    //   - name: string (required)
-    //   - price: number (required)
-    //   - description: string (optional)
-    //   - category: string (optional)
-    //   - stock: number (required)
-    //   - imageUrl: string (optional)
-    //
-    // Collection: library_files
-    // Document ID: {fileId}
-    // Fields:
-    //   - id: string (required)
-    //   - name: string (required)
-    //   - type: string (required, ['VIP', 'General', 'Temp'])
-    //   - url: string (required)
-    //   - description: string (optional)
-    //   - uploadedBy: string (required)
-    //
-    // Collection: forum_posts
-    // Document ID: {postId}
-    // Fields:
-    //   - id: string (required)
-    //   - title: string (required)
-    //   - content: string (required)
-    //   - authorUid: string (required)
-    //   - authorName: string (optional)
-    //   - category: string (optional)
-    //   - createdAt: timestamp (required)
-    //   - likes: list (optional)
-    //   - commentsCount: number (optional)
-    //
-    // ===============================================================
 
-    // ===============================================================
+    // =========================================================
     // Helper Functions
-    // ===============================================================
-    
+    // =========================================================
+
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -62,116 +15,258 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function isAdmin() {
+    function userDocExists() {
       return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userRole() {
+      return userDocExists()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
         (
-          (request.auth.token.email == "karolineleal10@gmail.com" && request.auth.token.email_verified == true) ||
-          (request.auth.token.email == "rponce.commitment@gmail.com" && request.auth.token.email_verified == true) ||
-          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'alfa')
-        );
+          request.auth.token.email == "karolineleal10@gmail.com" &&
+          request.auth.token.email_verified == true
+        ) ||
+        (
+          request.auth.token.email == "rponce.commitment@gmail.com" &&
+          request.auth.token.email_verified == true
+        ) ||
+        userRole() == "admin" ||
+        userRole() == "alfa"
+      );
     }
 
     function isOmega() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'omega';
+      return isAuthenticated() && userRole() == "omega";
     }
 
     function isValidEmail(email) {
-      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
     }
 
     function isValidUrl(url) {
-      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
-    }
-
-    function hasRequiredFields(fields) {
-      return request.resource.data.keys().hasAll(fields);
+      return url is string &&
+        (url.matches("^https://.*") || url.matches("^http://.*"));
     }
 
     function hasOnlyAllowedFields(fields) {
       return request.resource.data.keys().hasOnly(fields);
     }
 
-    // ===============================================================
-    // Collection Rules
-    // ===============================================================
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
 
-    // Users collection
+    function isNotBlocked() {
+      return !userDocExists() || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.blocked != true;
+    }
+
+    // =========================================================
+    // Users
+    // =========================================================
+
     match /users/{uid} {
+
       function isValidUser(data) {
-        return hasOnlyAllowedFields(['uid', 'email', 'role', 'displayName', 'photoURL', 'profession', 'purpose', 'isProfessional', 'blocked']) &&
-               data.uid is string && data.uid.size() > 0 &&
-               isValidEmail(data.email) &&
-               data.role in ['alfa', 'omega', 'user'] &&
-               (data.displayName == null || (data.displayName is string && data.displayName.size() < 100)) &&
-               (data.photoURL == null || isValidUrl(data.photoURL)) &&
-               (data.profession == null || (data.profession is string && data.profession.size() < 200)) &&
-               (data.purpose == null || (data.purpose is string && data.purpose.size() < 1000)) &&
-               (data.isProfessional == null || data.isProfessional is bool) &&
-               (data.blocked == null || data.blocked is bool);
+        return data.uid is string &&
+          data.uid.size() > 0 &&
+          isValidEmail(data.email) &&
+          data.role in ["admin", "user", "omega", "alfa"] &&
+          (data.displayName == null || (data.displayName is string && data.displayName.size() < 100)) &&
+          (data.photoURL == null || isValidUrl(data.photoURL)) &&
+          (data.profession == null || (data.profession is string && data.profession.size() < 200)) &&
+          (data.purpose == null || (data.purpose is string && data.purpose.size() < 1000)) &&
+          (data.isProfessional == null || data.isProfessional is bool) &&
+          (data.blocked == null || data.blocked is bool) &&
+          (data.createdAt == null || data.createdAt is timestamp) &&
+          (data.updatedAt == null || data.updatedAt is timestamp) &&
+          hasOnlyAllowedFields([
+            "uid",
+            "email",
+            "role",
+            "displayName",
+            "photoURL",
+            "profession",
+            "purpose",
+            "isProfessional",
+            "blocked",
+            "createdAt",
+            "updatedAt"
+          ]);
       }
 
-      function isNotBlocked() {
-        return !exists(/databases/$(database)/documents/users/$(request.auth.uid)) || 
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.blocked != true;
-      }
+      allow read: if isAuthenticated() && (isAdmin() || isOwner(uid) || isNotBlocked());
 
-      allow read: if isAuthenticated() && (isAdmin() || isNotBlocked());
-      allow create: if isAuthenticated() && isValidUser(request.resource.data) && 
-                    (isOwner(uid) && request.resource.data.role == 'user' || isAdmin());
-      allow update: if isAuthenticated() && isValidUser(request.resource.data) && 
-                    (isAdmin() || (isOwner(uid) && request.resource.data.role == resource.data.role && isNotBlocked()));
+      allow create: if isAuthenticated() &&
+        isValidUser(request.resource.data) &&
+        (
+          (isOwner(uid) && request.resource.data.role == "user") ||
+          isAdmin()
+        );
+
+      allow update: if isAuthenticated() &&
+        isValidUser(request.resource.data) &&
+        (
+          isAdmin() ||
+          (
+            isOwner(uid) &&
+            request.resource.data.role == resource.data.role &&
+            isNotBlocked()
+          )
+        );
+
       allow delete: if isAdmin();
     }
 
-    // Products collection
+    // =========================================================
+    // Products
+    // =========================================================
+
     match /products/{productId} {
+
       function isValidProduct(data) {
-        return hasOnlyAllowedFields(['id', 'name', 'price', 'description', 'category', 'stock', 'imageUrl']) &&
-               data.id is string && data.name is string && data.name.size() > 0 &&
-               data.price is number && data.price >= 0 &&
-               data.stock is number && data.stock >= 0 &&
-               (data.imageUrl == null || isValidUrl(data.imageUrl));
+        return data.id is string &&
+          data.name is string &&
+          data.name.size() > 0 &&
+          data.price is number &&
+          data.price >= 0 &&
+          data.stock is number &&
+          data.stock >= 0 &&
+          (data.description == null || data.description is string) &&
+          (data.category == null || data.category is string) &&
+          (data.imageUrl == null || isValidUrl(data.imageUrl)) &&
+          (data.createdAt == null || data.createdAt is timestamp) &&
+          (data.updatedAt == null || data.updatedAt is timestamp) &&
+          (data.isActive == null || data.isActive is bool) &&
+          (data.tags == null || data.tags is list) &&
+          hasOnlyAllowedFields([
+            "id",
+            "name",
+            "price",
+            "description",
+            "category",
+            "stock",
+            "imageUrl",
+            "createdAt",
+            "updatedAt",
+            "isActive",
+            "tags"
+          ]);
       }
 
       allow read: if true;
-      allow write: if isAdmin() && isValidProduct(request.resource.data);
+      allow create, update, delete: if isAdmin() && isValidProduct(request.resource.data);
     }
 
-    // Library Files collection
+    // =========================================================
+    // Library Files
+    // =========================================================
+
     match /library_files/{fileId} {
+
       function isValidFile(data) {
-        return hasOnlyAllowedFields(['id', 'name', 'type', 'url', 'description', 'uploadedBy', 'authorName', 'category', 'learningLevel']) &&
-               data.id is string && data.name is string && data.name.size() > 0 &&
-               data.type in ['VIP', 'General', 'Temp'] &&
-               isValidUrl(data.url) &&
-               data.uploadedBy is string &&
-               (data.authorName == null || data.authorName is string) &&
-               (data.category == null || data.category is string) &&
-               (data.learningLevel == null || data.learningLevel in ['Iniciante', 'Intermediário', 'Avançado']);
+        return data.id is string &&
+          data.name is string &&
+          data.name.size() > 0 &&
+          data.type in ["VIP", "General", "Temp"] &&
+          isValidUrl(data.url) &&
+          data.uploadedBy is string &&
+          (data.authorName == null || data.authorName is string) &&
+          (data.category == null || data.category is string) &&
+          (data.learningLevel == null || data.learningLevel in ["Iniciante", "Intermediário", "Avançado"]) &&
+          (data.status == null || data.status in ["draft", "published", "archived"]) &&
+          (data.version == null || data.version is string) &&
+          (data.isFeatured == null || data.isFeatured is bool) &&
+          (data.createdAt == null || data.createdAt is timestamp) &&
+          (data.updatedAt == null || data.updatedAt is timestamp) &&
+          hasOnlyAllowedFields([
+            "id",
+            "name",
+            "type",
+            "url",
+            "description",
+            "uploadedBy",
+            "authorName",
+            "category",
+            "learningLevel",
+            "status",
+            "version",
+            "isFeatured",
+            "createdAt",
+            "updatedAt"
+          ]);
       }
 
-      allow read: if (resource.data.type == 'General') || (isAuthenticated() && (isAdmin() || resource.data.type == 'Temp'));
-      allow write: if isAdmin() && isValidFile(request.resource.data);
+      allow read: if
+        resource.data.type == "General" ||
+        (
+          isAuthenticated() &&
+          (isAdmin() || resource.data.type == "Temp")
+        );
+
+      allow create, update, delete: if isAdmin() && isValidFile(request.resource.data);
     }
 
-    // Forum Posts collection
+    // =========================================================
+    // Forum Posts
+    // =========================================================
+
     match /forum_posts/{postId} {
+
       function isValidPost(data) {
-        return hasOnlyAllowedFields(['id', 'title', 'content', 'authorUid', 'authorName', 'authorIsProfessional', 'authorProfession', 'category', 'createdAt', 'likes', 'commentsCount', 'scheduledAt']) &&
-               data.id is string && data.title is string && data.title.size() > 0 &&
-               data.content is string && data.content.size() > 0 &&
-               data.authorUid is string &&
-               data.createdAt is timestamp &&
-               (data.likes == null || data.likes is list) &&
-               (data.commentsCount == null || data.commentsCount is number) &&
-               (data.scheduledAt == null || data.scheduledAt is timestamp) &&
-               (data.authorIsProfessional == null || data.authorIsProfessional is bool) &&
-               (data.authorProfession == null || data.authorProfession is string);
+        return data.id is string &&
+          data.title is string &&
+          data.title.size() > 0 &&
+          data.content is string &&
+          data.content.size() > 0 &&
+          data.authorUid is string &&
+          data.createdAt is timestamp &&
+          (data.authorName == null || data.authorName is string) &&
+          (data.authorIsProfessional == null || data.authorIsProfessional is bool) &&
+          (data.authorProfession == null || data.authorProfession is string) &&
+          (data.category == null || data.category is string) &&
+          (data.likes == null || data.likes is list) &&
+          (data.commentsCount == null || data.commentsCount is number) &&
+          (data.scheduledAt == null || data.scheduledAt is timestamp) &&
+          (data.status == null || data.status in ["open", "closed", "hidden"]) &&
+          (data.updatedAt == null || data.updatedAt is timestamp) &&
+          hasOnlyAllowedFields([
+            "id",
+            "title",
+            "content",
+            "authorUid",
+            "authorName",
+            "authorIsProfessional",
+            "authorProfession",
+            "category",
+            "createdAt",
+            "likes",
+            "commentsCount",
+            "scheduledAt",
+            "status",
+            "updatedAt"
+          ]);
       }
 
       allow read: if true;
-      allow create: if isAuthenticated() && isValidPost(request.resource.data) && request.resource.data.authorUid == request.auth.uid;
-      allow update: if isAuthenticated() && isValidPost(request.resource.data) && (isAdmin() || resource.data.authorUid == request.auth.uid);
+
+      allow create: if isAuthenticated() &&
+        isValidPost(request.resource.data) &&
+        request.resource.data.authorUid == request.auth.uid;
+
+      allow update: if isAuthenticated() &&
+        isValidPost(request.resource.data) &&
+        (
+          isAdmin() ||
+          resource.data.authorUid == request.auth.uid
+        );
+
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.authorUid == request.auth.uid);
     }
   }
