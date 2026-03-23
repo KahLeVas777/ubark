@@ -9,10 +9,14 @@
         "email": { "type": "string", "format": "email", "description": "User's email address." },
         "role": { "type": "string", "enum": ["admin", "user"], "description": "User's role in the system." },
         "displayName": { "type": "string", "description": "User's display name." },
-        "photoURL": { "type": "string", "format": "uri", "description": "User's profile picture URL." }
+        "photoURL": { "type": "string", "format": "uri", "description": "User's profile picture URL." },
+        "isActive": { "type": "boolean", "description": "Indicates whether the user account is active." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last profile update timestamp." }
       },
       "required": ["uid", "email", "role"]
     },
+
     "Product": {
       "title": "Product",
       "description": "Store product information.",
@@ -24,10 +28,19 @@
         "description": { "type": "string", "description": "Product description." },
         "category": { "type": "string", "description": "Product category." },
         "stock": { "type": "integer", "description": "Available stock." },
-        "imageUrl": { "type": "string", "format": "uri", "description": "Product image URL." }
+        "imageUrl": { "type": "string", "format": "uri", "description": "Product image URL." },
+        "isActive": { "type": "boolean", "description": "Indicates whether the product is visible in the catalog." },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Search and filtering tags."
+        },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Product creation timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last product update timestamp." }
       },
       "required": ["id", "name", "price", "stock"]
     },
+
     "LibraryFile": {
       "title": "LibraryFile",
       "description": "File metadata for the library.",
@@ -36,15 +49,21 @@
         "id": { "type": "string", "description": "Unique file ID." },
         "name": { "type": "string", "description": "File name." },
         "type": { "type": "string", "enum": ["VIP", "General", "Temp"], "description": "Access level for the file." },
+        "status": { "type": "string", "enum": ["draft", "published", "archived"], "description": "Publication status of the file." },
         "url": { "type": "string", "format": "uri", "description": "File download URL." },
         "description": { "type": "string", "description": "File description." },
         "uploadedBy": { "type": "string", "description": "UID of the user who uploaded the file." },
         "authorName": { "type": "string", "description": "Name of the author who uploaded the file." },
         "category": { "type": "string", "description": "Category of the file (e.g., Protocol, Strategy, Lore)." },
-        "learningLevel": { "type": "string", "enum": ["Iniciante", "Intermediário", "Avançado"], "description": "Learning level required for the file." }
+        "learningLevel": { "type": "string", "enum": ["Iniciante", "Intermediário", "Avançado"], "description": "Learning level required for the file." },
+        "version": { "type": "string", "description": "File version identifier." },
+        "isFeatured": { "type": "boolean", "description": "Indicates whether the file is highlighted." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "File creation timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last file update timestamp." }
       },
       "required": ["id", "name", "type", "url"]
     },
+
     "ForumPost": {
       "title": "ForumPost",
       "description": "Community forum post.",
@@ -56,13 +75,18 @@
         "authorUid": { "type": "string", "description": "UID of the post author." },
         "authorName": { "type": "string", "description": "Display name of the post author." },
         "category": { "type": "string", "description": "Post category." },
+        "status": { "type": "string", "enum": ["open", "closed", "hidden"], "description": "Post moderation status." },
         "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp when the post was created." },
-        "likes": { "type": "array", "description": "List of user UIDs who liked the post." },
-        "commentsCount": { "type": "integer", "description": "Number of comments on the post." }
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of the last update." },
+        "lastCommentAt": { "type": "string", "format": "date-time", "description": "Timestamp of the most recent comment." },
+        "likesCount": { "type": "integer", "description": "Number of likes received." },
+        "commentsCount": { "type": "integer", "description": "Number of comments on the post." },
+        "pinned": { "type": "boolean", "description": "Indicates whether the post is pinned." }
       },
       "required": ["id", "title", "content", "authorUid", "createdAt"]
     }
   },
+
   "firestore": {
     "/users/{uid}": {
       "schema": "User",
